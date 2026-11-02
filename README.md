@@ -1,7 +1,7 @@
 # ComfyUI-Crazy3DS-LayoutCompositor
 
 > **Crazy3DS - 视觉拼贴与手绘画板** ｜ 给图像编辑 / 生成模型用的「前置画板」节点
-> 手绘示意 · 区域标记 · 多图导入拼贴 · 读取上游结果宫格自动/手动排版 · 一键存图与传输
+> 手绘示意 · 区域标记 · 多图导入拼贴 · **多角色合影 / 物体融图（透明 PNG 抠图素材）** · 读取上游结果宫格自动/手动排版 · 一键存图与传输
 
 一个**独立于采样器的可视化画板节点**：你在节点里把素材摆好、标注好、排版好，节点把这张画板作为 `IMAGE` 直接喂给下游的图像编辑模型（Qwen-Image-Edit / Flux Kontext / GPT-Image-Edit 类工作流 / SDXL inpaint / 任意 img2img 分支）。
 
@@ -25,6 +25,8 @@
 
 图像编辑类模型（尤其是"带参考图的编辑模型"）最吃的其实是**画板本身**：参考图放哪、占多大、留白多少、要在哪里画圈标注、要拼成几宫格——这些前置工作过去只能在 PS 里做完再导回来。
 
+其中最有价值的一类用法是 **融图**：把**任意物体 / 角色的透明底抠图（无底 PNG）**当积木，在画板上自由摆放、缩放、拼接成一张"合成蓝图"，再交给模型融成一张真实照片 —— 多角色合影、人物 + 道具、角色进场景，就是它最常用的姿势。
+
 本节点把这块工作搬进 ComfyUI 画布里：
 
 ```
@@ -36,6 +38,42 @@
 - **零外部依赖**：前端纯 Canvas2D，后端只用 ComfyUI 自带库（torch / numpy / Pillow）。
 - **所见即所得**：画板上看到的合成画面 = 下游节点收到的像素，分辨率由你选的档位决定（1K / 2K / 4K / 8K）。
 - **自动保存**：节点在工作流里被保存/重开、浏览器刷新后，画板内容会从 `input/crazy3ds_temp` 自动恢复。
+
+---
+
+## ★ 核心玩法：多角色合影 / 物体融图
+
+> 一句话：**把透明底抠图当积木摆成"合成蓝图"，让模型把它融成一张真照片。**
+> 素材优先用**无底 PNG**（抠好的角色 / 商品 / 道具 / 动物 / 家具）；有底图也行，用 `✂ 图层自由擦除` 就地擦成透明。
+
+### 怎么做（6 步）
+
+1. **准备素材**：角色/物体抠图（PNG，最好带 alpha）。有底图 → 导入后用 `✂ 图层自由擦除` 把背景刷掉（擦成真透明，不是涂白）。
+2. **导入**：`⮮ 导` 多选，或直接把 PNG 拖进画板，或 `Ctrl+V` 粘贴（截图工具抠好的图直接贴）。导入时**全透明边框会自动裁掉**，素材不会带一圈空边。
+3. **定画板**：先选好最终成片的比例与档位（如 `16:9` + `2K`，或人像 `3:4` + `4K`）。之后切比例素材自动居中，不会乱。
+4. **摆站位（关键）**：`✥ 移` 逐层拖动 / 四角缩放：
+   - **脚底线对齐** —— 多人合影最容易出戏的地方，把各角色的脚/底边拖到同一条水平线上；
+   - **近大远小** —— 前景角色放大、后排角色缩小（比例差 5–15% 就有纵深）；
+   - **别重叠太多** —— 留一点缝隙，模型更容易分清每个人；
+   - **`Alt` 下钻** 选中被挡住的那一层，`↑ 置顶 / ↓ 置底` 调遮挡关系。
+5. **微调质感**：`图层透明度` 让插入的物体和原图融合（比如物体边角 85–95%）；`⇄ 镜像` 让朝向一致；`旋转` 让物体贴合透视。
+6. **输出**：`image` 接融图/编辑模型（Qwen-Image-Edit、Flux Kontext、GPT-Image-Edit、任意 img2img + 低 denoise）。prompt 里**只描述结果**，例如：
+   > "把这几个角色合成一张合影，统一暖色室内光，同一地面阴影，保持每个人脸和服装不变。"
+
+### 为什么这样出图更准
+
+- 模型看到的是**已经排好的构图**：站位、大小、遮挡、留白都确定了，它只需要"融"（统一光照、阴影、边缘、透视），不用猜"谁站哪"。
+- 透明素材直接叠在画板上，**边缘抗锯齿和半透明像素原样保留**，不会像"白底贴图"那样出现一圈白边。
+- 融不进去的地方，用画笔在画板上标一下（"这里加阴影"），比写一百字 prompt 有效。
+
+### 摆位的 4 条经验
+
+| 问题 | 处理 |
+|---|---|
+| 人物像"纸片贴上去" | 缩小一点 + 脚底对齐 + 给个统一的落点阴影（手绘一层灰影） |
+| 多人朝向乱 | `⇄ 镜像` 统一成同一侧，或让中间那人正对镜头 |
+| 物体悬空 | 把物体底边压到地面线以下 2–3px，让它"扎进"地面 |
+| 边缘发白/发脏 | 用 `✂ 图层自由擦除` 把抠图残留的半透明脏边擦掉 1–2px |
 
 ---
 
@@ -67,6 +105,7 @@
 | 能力 | 说明 |
 |---|---|
 | 导入 | ①`⮮ 导` 本地多选；②文件直接**拖进画板**；③`Ctrl+V` 粘贴剪贴板图片；④`✜ 读` 读取上游 |
+| 透明素材 | **无底 PNG 是首选**（角色 / 物体 / 道具 / 动物）；alpha 通道逐像素保留，叠加不产生白边；导入时自动裁掉全透明边框；有底图可用 `✂ 图层自由擦除` 就地抠形 |
 | 读取上游 | 从 `images` 输入插槽的连线取上游输出：**上游输出多张时逐张载入为独立图层**，并自动阶梯错位（26px/级）避免叠死 |
 | 透明自动裁边 | 导入的 PNG 若有全透明边框，载入时自动裁掉（`autoCropTransparentBorders`），拼图不留空边 |
 | 选择 | 单击选中；`Shift` 点选增/减多选；空白处拖出**框选**多选；`Alt` 在重叠图层间**穿透下钻**（优先命中非透明像素的图层） |
@@ -124,6 +163,7 @@
 
 ## 玩法（10 个可直接照抄的用法）
 
+0. **★ 多角色合影 / 物体融图**（最推荐，详见下一节）
 1. **局部重绘圈注**：导入原图 → `✥ 移` 摆满画板 → `✎ 画` 用红圈把要改的区域圈起来 + 写上目标描述 → 输出给 Qwen-Image-Edit / Kontext，prompt 写"按红圈标注的区域修改"。
 2. **分区编号编辑**：一张图分 1/2/3/4 区，用画笔在每区写编号 + 目标内容 → prompt 里按编号逐区下指令，一次改多处。
 3. **多参考图拼贴**（Character Sheet / 换装）：人物正/侧/背 + 服装单品 + 发型参考 → `田 网格` 或 `📰 焦点` 一键满铺 → 编辑模型按"这些参考图生成一张新图"。
@@ -254,6 +294,7 @@ POST execute(): 读文件 → EXIF 纠正 → RGBA 合成到白底 → RGB → n
 
 | 工作流 | 适配方式 |
 |---|---|
+| **融图 / 多角色合影**（图像编辑模型） | **主推场景**：导入无底 PNG 抠图 → 摆站位（脚底对齐、近大远小）→ 交给模型统一光影融合；详见上文「核心玩法」 |
 | **文生图（txt2img）** | 画板当"构图/文字示意板"：手绘骨架 + 手写文字 → 输出接 ControlNet / 图像提示（IP-Adapter）或直接当 img2img 起点。也可用 `☑︎存` 只取图做素材 |
 | **图生图（img2img）** | 画板当"参考底板"：原图铺满 + 标注圈选 → 输出接 img2img，`denoise` 控制改动幅度 |
 | **图像编辑模型**（Qwen-Image-Edit / Flux Kontext / GPT-Image-Edit 类） | 主用法：拼贴多参考图 + 区域标注 + 分区编号，一次给足上下文 |
@@ -305,6 +346,8 @@ MIT © Crazy3DS
 **ComfyUI-Crazy3DS-LayoutCompositor** — a visual layout/prep board node for image-editing models.
 
 Draw annotations, mark regions, import & collage multiple images, pull upstream results into the board and auto-layout them as grids, then export or feed the composite `IMAGE` downstream.
+
+Its flagship use is **image fusion / group-shot compositing**: drop transparent PNG cutouts of any character or object, place and scale them freely (foot-line alignment, near-large/far-small), erase pixels to make your own cutouts, then hand the board to an editing model that only has to unify lighting, shadow and perspective.
 
 Highlights: 5 aspect ratios × 4 resolution tiers (1K–8K) × 4 backgrounds; brush / eraser / eyedropper with an isolated drawing layer; multi-layer transform (move, scale, rotate, mirror, opacity, z-order, pixel-erase); ratio & freeform crop; five deterministic full-bleed auto-layout algorithms (hero / grid / row / column / tidy) with strict 4px gutters, zero crop, zero stretch; 15-step undo/redo; PNG export at full board resolution; auto-persist to `input/crazy3ds_temp` with forced bake before queueing so downstream always gets the latest board.
 

@@ -21,6 +21,7 @@ All notable changes to **ComfyUI-Crazy3DS-LayoutCompositor** are documented here
 
 **图层系统**
 - 导入四通道：本地多选导入 / 拖拽入板 / `Ctrl+V` 粘贴 / `✜ 读` 读取上游（多图批量载入 + 阶梯错位）。
+- **透明 PNG 抠图素材原生支持**：alpha 逐像素保留，多角色 / 物体叠加无白边，用于**融图与多人合影**（摆站位 → 交给模型统一光影）。
 - 透明边框自动裁切（`autoCropTransparentBorders`）。
 - 选择：单选、`Shift` 多选增删、框选、`Alt` 重叠穿透下钻（优先非透明像素）。
 - 变换：拖动、四角等比缩放、旋转（手柄 + 滑块，`Shift` 吸附 15°）、水平镜像、置顶/置底、透明度。
@@ -55,5 +56,6 @@ All notable changes to **ComfyUI-Crazy3DS-LayoutCompositor** are documented here
 
 ### Notes
 
+- 核心场景：**多角色合影 / 物体融图** —— 导入无底 PNG 抠图，自定义摆放拼接后交给编辑模型融合成一张真实照片；图层自由擦除可把有底图就地抠成透明素材。
 - 仅依赖 ComfyUI 自带环境（torch / numpy / Pillow），无额外 pip 依赖。
 - 已在 ComfyUI 前端（LiteGraph）与 `web/crazy3ds_compositor.js` 自定义 DOM 组件的常规用法下验证。
