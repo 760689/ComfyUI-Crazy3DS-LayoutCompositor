@@ -1,0 +1,25 @@
+[project]
+name = "comfyui-crazy3ds-layoutcompositor"
+version = "1.0.0"
+description = "Crazy3DS 视觉拼贴与手绘画板：面向图像编辑模型的前置画板节点（手绘示意 / 区域标记 / 多图拼贴 / 上游结果宫格排版 / 一键存图与传输）"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Crazy3DS" }]
+dependencies = []
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+]
+
+[project.urls]
+Homepage = "https://github.com/760689/ComfyUI-Crazy3DS-LayoutCompositor"
+Documentation = "https://github.com/760689/ComfyUI-Crazy3DS-LayoutCompositor/blob/main/docs/USAGE.md"
+
+[tool.comfy]
+PublisherId = "crazy3ds"
+DisplayName = "Crazy3DS Layout Compositor"
+Icon = "https://raw.githubusercontent.com/760689/ComfyUI-Crazy3DS-LayoutCompositor/main/docs/03-collage-grid.png"

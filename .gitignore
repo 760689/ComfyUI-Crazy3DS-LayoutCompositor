@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# ComfyUI runtime artifacts
+output/
+input/crazy3ds_temp/
+*.txt.bak
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Packages
+*.zip
+*.7z
+
+# Local publishing helpers (never commit tokens)
+_token.txt
+_token*.txt
